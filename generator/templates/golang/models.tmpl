@@ -1,0 +1,7 @@
+{{- range $o := .Objects}}
+type {{.Name}} struct {
+	{{- range $f := .Fields}}
+		{{upperFirst .Name}} {{.Type}} `json:"{{.Name}}"`
+	{{- end}}
+}
+{{- end}}

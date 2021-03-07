@@ -7,6 +7,11 @@ import (
 	"github.com/GeertJohan/go.rice"
 )
 
+var funcs = template.FuncMap{
+	"upper":      Upper,
+	"upperFirst": UpperFirst,
+}
+
 type TemplateBox struct {
 	box *rice.Box
 }
@@ -16,7 +21,7 @@ func (t *TemplateBox) Execute(tplName string, data interface{}) (string, error) 
 	if err != nil {
 		return "", err
 	}
-	tpl, err := template.New(tplName).Parse(tplStr)
+	tpl, err := template.New(tplName).Funcs(funcs).Parse(tplStr)
 	if err != nil {
 		return "", err
 	}

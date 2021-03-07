@@ -3,6 +3,7 @@ package generator
 import (
 	"io/ioutil"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,9 +18,10 @@ type TestData struct {
 
 var tests = []TestData{
 	{
-		name: "package name",
-		file: "./testdata/package-name.gql",
-		g:    Generator{PackageName: "main"},
+		name:      "package name",
+		file:      "./testdata/package-name.gql",
+		g:         Generator{PackageName: "main"},
+		assertion: assert.NoError,
 	},
 	{
 		name:      "invalid token",
@@ -33,12 +35,12 @@ var tests = []TestData{
 		g:         Generator{PackageName: "main"},
 		assertion: assert.Error,
 	},
-	// {
-	// 	name:      "basic types",
-	// 	file:      "./testdata/basic-types.gql",
-	// 	g:         Generator{PackageName: "main"},
-	// 	assertion: assert.Error,
-	// },
+	{
+		name:      "basic types",
+		file:      "./testdata/basic-types.gql",
+		g:         Generator{PackageName: "main"},
+		assertion: assert.NoError,
+	},
 }
 
 func TestGenerate(t *testing.T) {
@@ -65,7 +67,7 @@ func TestGenerate(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			assert.Equal(t, want, out)
+			assert.Equal(t, strings.TrimSpace(want), strings.TrimSpace(out))
 
 		})
 	}

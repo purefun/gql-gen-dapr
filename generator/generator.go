@@ -2,38 +2,65 @@ package generator
 
 import (
 	"bytes"
+	"errors"
+	"go/format"
+
+	// "go/types"
 
 	"github.com/purefun/gql-gen-dapr/generator/templates"
 	"github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
+var skipTypes = map[string]bool{
+	"__Directive":         true,
+	"__DirectiveLocation": true,
+	"__Type":              true,
+	"__TypeKind":          true,
+	"__Field":             true,
+	"__EnumValue":         true,
+	"__InputValue":        true,
+	"__Schema":            true,
+}
+
+type Models struct {
+	Objects []*Object
+}
+
+type Object struct {
+	Description string
+	Name        string
+	Fields      []*Field
+	Implements  []string
+}
+
+type Field struct {
+	Description string
+	Name        string
+	Type        string
+	Tag         string
+}
+
 type Generator struct {
 	PackageName string
 	Sources     []*ast.Source
+	Schema      *ast.Schema
+	Models      *Models
 	Out         *bytes.Buffer
 }
 
 func (g *Generator) Generate() (string, error) {
 	g.Out = &bytes.Buffer{}
-	schema, err := gqlparser.LoadSchema(g.Sources...)
+
+	g.P("package ", g.PackageName)
+	g.P()
+
+	err := g.LoadSchema()
 	if err != nil {
 		return "", err
 	}
 
-	for _, t := range schema.Types {
-		switch t.Kind {
-		case ast.Object:
-
-		}
-	}
-
-	out, tplErr := templates.Golang.Execute("object.tmpl", struct{}{})
-	if tplErr != nil {
-		return "", tplErr
-	}
-
-	g.WriteOut(out)
+	g.genModels()
 
 	return g.Out.String(), nil
 }
@@ -46,6 +73,67 @@ func (g *Generator) AddSource(name, content string) {
 	g.Sources = append(g.Sources, NewSource(name, content))
 }
 
-func (g *Generator) WriteOut(o string) {
-	g.Out.WriteString(o)
+func (g *Generator) P(ss ...string) {
+	if len(ss) == 0 {
+		g.Out.WriteString("\n")
+		return
+	}
+	for _, s := range ss {
+		g.Out.WriteString(s)
+	}
+}
+
+func (g *Generator) LoadSchema() error {
+	if len(g.Sources) == 0 {
+		return errors.New("generator: empty source")
+	}
+	schema, err := gqlparser.LoadSchema(g.Sources...)
+	if err != nil {
+		return err
+	}
+	g.Schema = schema
+	return nil
+}
+
+func (g *Generator) genModels() error {
+	g.Models = &Models{}
+
+	for _, schemaType := range g.Schema.Types {
+
+		if _, ok := skipTypes[schemaType.Name]; ok {
+			continue
+		}
+
+		if schemaType == g.Schema.Query ||
+			schemaType == g.Schema.Mutation ||
+			schemaType == g.Schema.Subscription {
+			continue
+		}
+
+		switch schemaType.Kind {
+		case ast.Object:
+			obj := &Object{Name: schemaType.Name}
+			for _, field := range schemaType.Fields {
+				fieldDefinition := g.Schema.Types[field.Type.Name()]
+				switch fieldDefinition.Kind {
+				case ast.Scalar:
+					obj.Fields = append(obj.Fields, &Field{Name: field.Name, Type: "string"})
+				}
+			}
+			g.Models.Objects = append(g.Models.Objects, obj)
+
+		}
+	}
+
+	out, err := templates.Golang.Execute("models.tmpl", g.Models)
+
+	formatted, err := format.Source([]byte(out))
+
+	if err != nil {
+		return err
+	}
+
+	g.P(string(formatted))
+
+	return nil
 }
