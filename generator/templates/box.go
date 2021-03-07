@@ -16,7 +16,14 @@ type TemplateBox struct {
 	box *rice.Box
 }
 
-func (t *TemplateBox) Execute(tplName string, data interface{}) (string, error) {
+type Option func(funcs template.FuncMap)
+
+func (t *TemplateBox) Execute(tplName string, data interface{}, opts ...Option) (string, error) {
+
+	for _, o := range opts {
+		o(funcs)
+	}
+
 	tplStr, err := t.box.String(tplName)
 	if err != nil {
 		return "", err

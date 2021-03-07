@@ -1,11 +1,9 @@
 package generator
 
 import (
-	"bytes"
+	// "bytes"
 	"errors"
 	"go/format"
-
-	// "go/types"
 
 	"github.com/purefun/gql-gen-dapr/generator/templates"
 	"github.com/vektah/gqlparser/v2"
@@ -46,23 +44,37 @@ type Generator struct {
 	Sources     []*ast.Source
 	Schema      *ast.Schema
 	Models      *Models
-	Out         *bytes.Buffer
+	ServiceName string
+	Imports     []string
 }
 
 func (g *Generator) Generate() (string, error) {
-	g.Out = &bytes.Buffer{}
-
-	g.P("package ", g.PackageName)
-	g.P()
 
 	err := g.LoadSchema()
 	if err != nil {
 		return "", err
 	}
 
-	g.genModels()
+	packageOut, err := g.genPackage()
+	if err != nil {
+		return "", err
+	}
 
-	return g.Out.String(), nil
+	modelsOut, err := g.genModels()
+	if err != nil {
+		return "", err
+	}
+	serviceOut, err := g.genService()
+	if err != nil {
+		return "", err
+	}
+
+	importsOut, err := g.genImports()
+	if err != nil {
+		return "", err
+	}
+
+	return packageOut + importsOut + modelsOut + serviceOut, nil
 }
 
 func NewSource(name, schemaString string) *ast.Source {
@@ -73,15 +85,15 @@ func (g *Generator) AddSource(name, content string) {
 	g.Sources = append(g.Sources, NewSource(name, content))
 }
 
-func (g *Generator) P(ss ...string) {
-	if len(ss) == 0 {
-		g.Out.WriteString("\n")
-		return
-	}
-	for _, s := range ss {
-		g.Out.WriteString(s)
-	}
-}
+// func (g *Generator) P(ss ...string) {
+// 	if len(ss) == 0 {
+// 		g.Out.WriteString("\n")
+// 		return
+// 	}
+// 	for _, s := range ss {
+// 		g.Out.WriteString(s)
+// 	}
+// }
 
 func (g *Generator) LoadSchema() error {
 	if len(g.Sources) == 0 {
@@ -95,7 +107,15 @@ func (g *Generator) LoadSchema() error {
 	return nil
 }
 
-func (g *Generator) genModels() error {
+func (g *Generator) genPackage() (string, error) {
+	out, err := templates.Golang.Execute("package.tmpl", g)
+	if err != nil {
+		return "", err
+	}
+	return out, nil
+}
+
+func (g *Generator) genModels() (string, error) {
 	g.Models = &Models{}
 
 	for _, schemaType := range g.Schema.Types {
@@ -130,10 +150,28 @@ func (g *Generator) genModels() error {
 	formatted, err := format.Source([]byte(out))
 
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	g.P(string(formatted))
+	return string(formatted), nil
+}
 
-	return nil
+func (g *Generator) genService() (string, error) {
+	// g.addImport("context")
+	// g.addImport("encoding/json")
+	// g.addImport("github.com/dapr/go-sdk/client")
+	// g.addImport("github.com/dapr/go-sdk/service/common")
+	return "", nil
+}
+
+func (g *Generator) addImport(s string) {
+	g.Imports = append(g.Imports, s)
+}
+
+func (g *Generator) genImports() (string, error) {
+	out, err := templates.Golang.Execute("imports.tmpl", g)
+	if err != nil {
+		return "", err
+	}
+	return out, nil
 }

@@ -20,25 +20,13 @@ var tests = []TestData{
 	{
 		name:      "package name",
 		file:      "./testdata/package-name.gql",
-		g:         Generator{PackageName: "main"},
+		g:         Generator{PackageName: "testdata"},
 		assertion: assert.NoError,
-	},
-	{
-		name:      "invalid token",
-		file:      "./testdata/invalid-token.gql",
-		g:         Generator{PackageName: "main"},
-		assertion: assert.Error,
-	},
-	{
-		name:      "empty type",
-		file:      "./testdata/empty-type.gql",
-		g:         Generator{PackageName: "main"},
-		assertion: assert.Error,
 	},
 	{
 		name:      "basic types",
 		file:      "./testdata/basic-types.gql",
-		g:         Generator{PackageName: "main"},
+		g:         Generator{PackageName: "testdata"},
 		assertion: assert.NoError,
 	},
 }
