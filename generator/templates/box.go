@@ -7,11 +7,6 @@ import (
 	"github.com/GeertJohan/go.rice"
 )
 
-var funcs = template.FuncMap{
-	"upper":      Upper,
-	"upperFirst": UpperFirst,
-}
-
 type TemplateBox struct {
 	box *rice.Box
 }

@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"go/format"
 	"io/ioutil"
 	"regexp"
 	"strings"
@@ -16,17 +17,27 @@ type TestData struct {
 	assertion assert.ErrorAssertionFunc
 }
 
+func newGen() Generator {
+	return Generator{PackageName: "testdata", ServiceName: "Example"}
+}
+
 var tests = []TestData{
 	{
 		name:      "package name",
 		file:      "./testdata/package-name.gql",
-		g:         Generator{PackageName: "testdata"},
+		g:         newGen(),
 		assertion: assert.NoError,
 	},
 	{
-		name:      "basic types",
-		file:      "./testdata/basic-types.gql",
-		g:         Generator{PackageName: "testdata"},
+		name:      "scalar-fields",
+		file:      "./testdata/scalar-fields.gql",
+		g:         newGen(),
+		assertion: assert.NoError,
+	},
+	{
+		name:      "basic service",
+		file:      "./testdata/resolvers.gql",
+		g:         newGen(),
 		assertion: assert.NoError,
 	},
 }
@@ -42,12 +53,13 @@ func TestGenerate(t *testing.T) {
 
 			var re = regexp.MustCompile(`^(.+)(\.gql)`)
 			goFile := re.ReplaceAllString(tt.file, `$1.go`)
-			goString, err := ioutil.ReadFile(goFile)
+			goBytes, err := ioutil.ReadFile(goFile)
 			assert.NoError(t, err)
 
 			out, err := tt.g.Generate()
 
-			want := string(goString)
+			want, err := format.Source(goBytes)
+			assert.NoError(t, err)
 
 			if tt.assertion != nil {
 				tt.assertion(t, err)
@@ -55,8 +67,7 @@ func TestGenerate(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			assert.Equal(t, strings.TrimSpace(want), strings.TrimSpace(out))
-
+			assert.Equal(t, strings.TrimSpace(string(want)), strings.TrimSpace(out))
 		})
 	}
 }

@@ -1,27 +1,26 @@
 package testdata
 
 import (
-	context "context"
-	json "encoding/json"
-
-	client "github.com/dapr/go-sdk/client"
-	common "github.com/dapr/go-sdk/service/common"
+	"context"
+	"encoding/json"
+	"github.com/dapr/go-sdk/client"
+	"github.com/dapr/go-sdk/service/common"
 )
 
-type ExampleClient interface {
+type Example interface {
 	Hello(ctx context.Context) (string, error)
 }
 
-type exampleClient struct {
+type _ExampleClient struct {
 	cc    client.Client
 	appID string
 }
 
-func NewExampleClient(cc client.Client, appID string) ExampleClient {
-	return &exampleClient{cc, appID}
+func NewExampleClient(cc client.Client, appID string) *_ExampleClient {
+	return &_ExampleClient{cc, appID}
 }
 
-func (c *exampleClient) Hello(ctx context.Context) (string, error) {
+func (c *_ExampleClient) Hello(ctx context.Context) (string, error) {
 	content := &client.DataContent{ContentType: "application/json"}
 	resp, err := c.cc.InvokeMethodWithContent(ctx, c.appID, "Hello", "post", content)
 	if err != nil {
@@ -30,13 +29,9 @@ func (c *exampleClient) Hello(ctx context.Context) (string, error) {
 	return string(resp), nil
 }
 
-type ExampleServer interface {
-	Hello(ctx context.Context) (string, error)
-}
-
 type InvocationHandlerFunc func(ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error)
 
-func _Example_Hello_Handler(srv ExampleServer) InvocationHandlerFunc {
+func _Example_Hello_Handler(srv Example) InvocationHandlerFunc {
 	return func(ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error) {
 		resp, mErr := srv.Hello(ctx)
 		if mErr != nil {

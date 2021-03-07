@@ -1,7 +1,8 @@
-{{- if .Imports}}
+{{if .Imports}}
+
 import (
 	{{- range $i := .Imports}}
-  "{{- $i}}"
-  {{- end}}
+	"{{- $i}}"
+	{{- end}}
 )
-{{- end}}
+{{end -}}

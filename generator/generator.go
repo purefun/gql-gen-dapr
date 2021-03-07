@@ -3,7 +3,9 @@ package generator
 import (
 	// "bytes"
 	"errors"
+	"fmt"
 	"go/format"
+	"strings"
 
 	"github.com/purefun/gql-gen-dapr/generator/templates"
 	"github.com/vektah/gqlparser/v2"
@@ -19,6 +21,9 @@ var skipTypes = map[string]bool{
 	"__EnumValue":         true,
 	"__InputValue":        true,
 	"__Schema":            true,
+
+	"__schema": true,
+	"__type":   true,
 }
 
 type Models struct {
@@ -39,6 +44,15 @@ type Field struct {
 	Tag         string
 }
 
+type Resolver struct {
+	Name string
+	Type string
+}
+
+type Query struct {
+	Resolvers []*Resolver
+}
+
 type Generator struct {
 	PackageName string
 	Sources     []*ast.Source
@@ -46,6 +60,7 @@ type Generator struct {
 	Models      *Models
 	ServiceName string
 	Imports     []string
+	Query       *Query
 }
 
 func (g *Generator) Generate() (string, error) {
@@ -132,12 +147,16 @@ func (g *Generator) genModels() (string, error) {
 
 		switch schemaType.Kind {
 		case ast.Object:
-			obj := &Object{Name: schemaType.Name}
+			obj := &Object{Name: schemaType.Name, Description: schemaType.Description}
 			for _, field := range schemaType.Fields {
 				fieldDefinition := g.Schema.Types[field.Type.Name()]
 				switch fieldDefinition.Kind {
 				case ast.Scalar:
-					obj.Fields = append(obj.Fields, &Field{Name: field.Name, Type: "string"})
+					obj.Fields = append(obj.Fields, &Field{
+						Name:        field.Name,
+						Type:        "string",
+						Description: field.Description,
+					})
 				}
 			}
 			g.Models.Objects = append(g.Models.Objects, obj)
@@ -150,17 +169,36 @@ func (g *Generator) genModels() (string, error) {
 	formatted, err := format.Source([]byte(out))
 
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("format source failed: %w, source: %s", err, out)
 	}
 
 	return string(formatted), nil
 }
 
 func (g *Generator) genService() (string, error) {
-	// g.addImport("context")
-	// g.addImport("encoding/json")
-	// g.addImport("github.com/dapr/go-sdk/client")
-	// g.addImport("github.com/dapr/go-sdk/service/common")
+	g.Query = &Query{Resolvers: []*Resolver{}}
+
+	if g.Schema.Query != nil {
+		g.addImport("context")
+		g.addImport("encoding/json")
+		g.addImport("github.com/dapr/go-sdk/client")
+		g.addImport("github.com/dapr/go-sdk/service/common")
+
+		for _, field := range g.Schema.Query.Fields {
+
+			if _, ok := skipTypes[field.Name]; ok {
+				continue
+			}
+			r := &Resolver{Name: field.Name, Type: strings.ToLower(field.Type.Name())}
+			g.Query.Resolvers = append(g.Query.Resolvers, r)
+		}
+
+		out, err := templates.Golang.Execute("service.tmpl", g)
+		if err != nil {
+			return "", err
+		}
+		return out, nil
+	}
 	return "", nil
 }
 

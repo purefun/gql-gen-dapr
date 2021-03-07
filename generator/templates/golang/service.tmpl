@@ -1,0 +1,54 @@
+type {{upperFirst .ServiceName}} interface {
+{{- range .Query.Resolvers}}
+	{{upperFirst .Name}}(ctx context.Context) ({{.Type}}, error)
+{{- end}}
+}
+
+type _{{.ServiceName}}Client struct {
+	cc    client.Client
+	appID string
+}
+
+func New{{.ServiceName}}Client(cc client.Client, appID string) *_{{.ServiceName}}Client {
+	return &_{{.ServiceName}}Client{cc, appID}
+}
+{{ range .Query.Resolvers }}
+func (c *_{{$.ServiceName}}Client) {{upperFirst .Name}}(ctx context.Context) ({{.Type}}, error) {
+	content := &client.DataContent{ContentType: "application/json"}
+	resp, err := c.cc.InvokeMethodWithContent(ctx, c.appID, "{{upperFirst .Name}}", "post", content)
+	if err != nil {
+		return "", err
+	}
+	return string(resp), nil
+}
+{{- end}}
+
+type InvocationHandlerFunc func(ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error)
+
+{{range .Query.Resolvers -}}
+func _{{$.ServiceName}}_{{upperFirst .Name}}_Handler(srv {{$.ServiceName}}) InvocationHandlerFunc {
+	return func(ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error) {
+		resp, mErr := srv.{{upperFirst .Name}}(ctx)
+		if mErr != nil {
+			err = mErr
+			return
+		}
+		data, encErr := json.Marshal(resp)
+		if encErr != nil {
+			err = encErr
+			return
+		}
+		out = &common.Content{
+			ContentType: "application/json",
+			Data:        data,
+		}
+		return
+	}
+}
+{{- end}}
+
+func Register(s common.Service, srv ExampleServer) {
+{{- range .Query.Resolvers}}
+	s.AddServiceInvocationHandler("{{upperFirst .Name}}", _{{$.ServiceName}}_{{upperFirst .Name}}_Handler(srv))
+{{end -}}
+}
