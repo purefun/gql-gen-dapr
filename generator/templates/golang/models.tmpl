@@ -1,8 +1,11 @@
-{{range .Objects}}
-
+{{- range .Models.Objects}}
+{{$.GoDoc .Name .Description}}
 type {{.Name}} struct {
 	{{- range .Fields}}
-		{{upperFirst .Name}} {{.Type}} `json:"{{.Name}}"`
+		{{- if .Description}}
+		{{$.GoDoc .Name .Description}}
+		{{- end}}
+		{{$.GoName .Name}} {{.Type}} `json:"{{.Name}}"`
 	{{- end}}
 }
 {{end}}

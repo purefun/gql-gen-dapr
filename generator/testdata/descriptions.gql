@@ -1,0 +1,12 @@
+"a user type"
+type User {
+  "user id type"
+  id: ID
+  """
+  a string string
+  line 1
+  line 2
+  """
+  name: String
+  noDescriptField: String
+}

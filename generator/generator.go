@@ -1,11 +1,11 @@
 package generator
 
 import (
-	// "bytes"
 	"errors"
 	"fmt"
 	"go/format"
 	"strings"
+	"unicode"
 
 	"github.com/purefun/gql-gen-dapr/generator/templates"
 	"github.com/vektah/gqlparser/v2"
@@ -89,7 +89,15 @@ func (g *Generator) Generate() (string, error) {
 		return "", err
 	}
 
-	return packageOut + importsOut + modelsOut + serviceOut, nil
+	out := packageOut + importsOut + modelsOut + serviceOut
+
+	formatted, err := format.Source([]byte(out))
+
+	if err != nil {
+		return "", fmt.Errorf("format source failed: %w, source: %s", err, out)
+	}
+
+	return string(formatted), nil
 }
 
 func NewSource(name, schemaString string) *ast.Source {
@@ -100,19 +108,9 @@ func (g *Generator) AddSource(name, content string) {
 	g.Sources = append(g.Sources, NewSource(name, content))
 }
 
-// func (g *Generator) P(ss ...string) {
-// 	if len(ss) == 0 {
-// 		g.Out.WriteString("\n")
-// 		return
-// 	}
-// 	for _, s := range ss {
-// 		g.Out.WriteString(s)
-// 	}
-// }
-
 func (g *Generator) LoadSchema() error {
 	if len(g.Sources) == 0 {
-		return errors.New("generator: empty source")
+		return errors.New("no source")
 	}
 	schema, err := gqlparser.LoadSchema(g.Sources...)
 	if err != nil {
@@ -164,15 +162,12 @@ func (g *Generator) genModels() (string, error) {
 		}
 	}
 
-	out, err := templates.Golang.Execute("models.tmpl", g.Models)
-
-	formatted, err := format.Source([]byte(out))
-
+	out, err := templates.Golang.Execute("models.tmpl", g)
 	if err != nil {
-		return "", fmt.Errorf("format source failed: %w, source: %s", err, out)
+		return "", err
 	}
 
-	return string(formatted), nil
+	return out, nil
 }
 
 func (g *Generator) genService() (string, error) {
@@ -212,4 +207,21 @@ func (g *Generator) genImports() (string, error) {
 		return "", err
 	}
 	return out, nil
+}
+
+func (g *Generator) GoName(name string) string {
+	if name == "id" {
+		return "ID"
+	}
+	r := []rune(name)
+	r[0] = unicode.ToUpper(r[0])
+	return string(r)
+}
+
+func (g *Generator) GoDoc(name, desc string) string {
+	if desc == "" {
+		return ""
+	}
+	n := g.GoName(name)
+	return "// " + n + " " + strings.Replace(desc, "\n", "\n"+"// ", -1)
 }
