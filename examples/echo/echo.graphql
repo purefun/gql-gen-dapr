@@ -1,7 +1,12 @@
-type Message {
+input EchoInput {
+  text: String! @tag(json: "text")
+}
+
+type EchoOutput {
   text: String! @tag(json: "text")
 }
 
 type Query {
-  echo: Message!
+  echo(input: EchoInput!): EchoOutput!
+  text: String!
 }

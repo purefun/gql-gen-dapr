@@ -1,6 +1,6 @@
 type {{upperFirst .ServiceName}} interface {
 {{- range .Query.Resolvers}}
-	{{upperFirst .Name}}(ctx context.Context) ({{upperFirst .Type}}, error)
+	{{upperFirst .Name}}(ctx context.Context) ({{.Type}}, error)
 {{- end}}
 }
 
@@ -12,14 +12,21 @@ type _{{upperFirst .ServiceName}}Client struct {
 func New{{upperFirst .ServiceName}}Client(cc client.Client, appID string) *_{{upperFirst .ServiceName}}Client {
 	return &_{{upperFirst .ServiceName}}Client{cc, appID}
 }
+
 {{ range .Query.Resolvers }}
-func (c *_{{upperFirst $.ServiceName}}Client) {{upperFirst .Name}}(ctx context.Context) (*{{upperFirst .Type}}, error) {
-	content := &client.DataContent{ContentType: "application/json"}
+func (c *_{{upperFirst $.ServiceName}}Client) {{upperFirst .Name}}(ctx context.Context{{if .Argument}}, in *{{.Argument.Type}}{{end}}) (*{{.Type}}, error) {
+    {{- if .Argument}}
+    data, err := json.Marshal(in)
+    if err != nil {
+      return nil, err
+    }
+    {{- end}}
+	content := &client.DataContent{ContentType: "application/json"{{if .Argument}}, Data: data{{end}}}
 	resp, err := c.cc.InvokeMethodWithContent(ctx, c.appID, "{{upperFirst .Name}}", "post", content)
 	if err != nil {
 		return nil, err
 	}
-	out := &{{upperFirst .Type}}{}
+	out := new({{.Type}})
 	err = json.Unmarshal(resp, out)
 	if err != nil {
       return nil, err
@@ -30,7 +37,7 @@ func (c *_{{upperFirst $.ServiceName}}Client) {{upperFirst .Name}}(ctx context.C
 
 type InvocationHandlerFunc func(ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error)
 
-{{range .Query.Resolvers -}}
+{{range .Query.Resolvers}}
 func _{{upperFirst $.ServiceName}}_{{upperFirst .Name}}_Handler(srv {{upperFirst $.ServiceName}}) InvocationHandlerFunc {
 	return func(ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error) {
 		resp, mErr := srv.{{upperFirst .Name}}(ctx)
@@ -50,10 +57,10 @@ func _{{upperFirst $.ServiceName}}_{{upperFirst .Name}}_Handler(srv {{upperFirst
 		return
 	}
 }
-{{- end}}
+{{end}}
 
 func Register(s common.Service, srv {{upperFirst $.ServiceName}}) {
 {{- range .Query.Resolvers}}
-	s.AddServiceInvocationHandler("{{upperFirst .Name}}", _{{$.ServiceName}}_{{upperFirst .Name}}_Handler(srv))
-{{end -}}
+	s.AddServiceInvocationHandler("{{.Name}}", _{{upperFirst $.ServiceName}}_{{upperFirst .Name}}_Handler(srv))
+{{- end}}
 }

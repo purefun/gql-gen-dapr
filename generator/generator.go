@@ -70,9 +70,15 @@ var ScalarMap = map[string]string{
 	"Boolean": "bool",
 }
 
-type Resolver struct {
+type Argument struct {
 	Name string
 	Type string
+}
+
+type Resolver struct {
+	Name     string
+	Type     string
+	Argument *Argument
 }
 
 type Query struct {
@@ -140,7 +146,7 @@ func (g *Generator) Generate() (string, error) {
 	formatted, err := format.Source([]byte(out))
 
 	if err != nil {
-		return "", fmt.Errorf("format source failed: %w, source: %s", err, out)
+		return "", fmt.Errorf("format source failed: %w, source: \n%s", err, out)
 	}
 
 	return string(formatted), nil
@@ -291,7 +297,22 @@ func (g *Generator) genService() (string, error) {
 			if _, ok := skipTypes[field.Name]; ok {
 				continue
 			}
-			r := &Resolver{Name: field.Name, Type: strings.ToLower(field.Type.Name())}
+			typeName, ok := ScalarMap[field.Type.NamedType]
+			if !ok {
+				typeName = field.Type.NamedType
+			}
+
+			r := &Resolver{Name: field.Name, Type: typeName}
+
+			if len(field.Arguments) > 1 {
+				panic("number of resolver arguments should be 0 or 1")
+			}
+
+			if len(field.Arguments) == 1 {
+				arg := field.Arguments[0]
+				r.Argument = &Argument{Name: arg.Name, Type: arg.Type.NamedType}
+			}
+
 			g.Query.Resolvers = append(g.Query.Resolvers, r)
 		}
 
