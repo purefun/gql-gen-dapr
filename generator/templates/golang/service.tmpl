@@ -1,32 +1,37 @@
 type {{upperFirst .ServiceName}} interface {
 {{- range .Query.Resolvers}}
-	{{upperFirst .Name}}(ctx context.Context) ({{.Type}}, error)
+	{{upperFirst .Name}}(ctx context.Context) ({{upperFirst .Type}}, error)
 {{- end}}
 }
 
-type _{{.ServiceName}}Client struct {
+type _{{upperFirst .ServiceName}}Client struct {
 	cc    client.Client
 	appID string
 }
 
-func New{{.ServiceName}}Client(cc client.Client, appID string) *_{{.ServiceName}}Client {
-	return &_{{.ServiceName}}Client{cc, appID}
+func New{{upperFirst .ServiceName}}Client(cc client.Client, appID string) *_{{upperFirst .ServiceName}}Client {
+	return &_{{upperFirst .ServiceName}}Client{cc, appID}
 }
 {{ range .Query.Resolvers }}
-func (c *_{{$.ServiceName}}Client) {{upperFirst .Name}}(ctx context.Context) ({{.Type}}, error) {
+func (c *_{{upperFirst $.ServiceName}}Client) {{upperFirst .Name}}(ctx context.Context) (*{{upperFirst .Type}}, error) {
 	content := &client.DataContent{ContentType: "application/json"}
 	resp, err := c.cc.InvokeMethodWithContent(ctx, c.appID, "{{upperFirst .Name}}", "post", content)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return string(resp), nil
+	out := &{{upperFirst .Type}}{}
+	err = json.Unmarshal(resp, out)
+	if err != nil {
+      return nil, err
+	}
+	return out, nil
 }
 {{- end}}
 
 type InvocationHandlerFunc func(ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error)
 
 {{range .Query.Resolvers -}}
-func _{{$.ServiceName}}_{{upperFirst .Name}}_Handler(srv {{$.ServiceName}}) InvocationHandlerFunc {
+func _{{upperFirst $.ServiceName}}_{{upperFirst .Name}}_Handler(srv {{upperFirst $.ServiceName}}) InvocationHandlerFunc {
 	return func(ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error) {
 		resp, mErr := srv.{{upperFirst .Name}}(ctx)
 		if mErr != nil {
@@ -47,7 +52,7 @@ func _{{$.ServiceName}}_{{upperFirst .Name}}_Handler(srv {{$.ServiceName}}) Invo
 }
 {{- end}}
 
-func Register(s common.Service, srv ExampleServer) {
+func Register(s common.Service, srv {{upperFirst $.ServiceName}}) {
 {{- range .Query.Resolvers}}
 	s.AddServiceInvocationHandler("{{upperFirst .Name}}", _{{$.ServiceName}}_{{upperFirst .Name}}_Handler(srv))
 {{end -}}

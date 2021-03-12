@@ -79,6 +79,18 @@ type Query struct {
 	Resolvers []*Resolver
 }
 
+type Options struct {
+	PackageName string
+	ServiceName string
+}
+
+func NewGenerator(o Options) *Generator {
+	return &Generator{
+		PackageName: o.PackageName,
+		ServiceName: o.ServiceName,
+	}
+}
+
 type Generator struct {
 	PackageName string
 	Sources     []*ast.Source
