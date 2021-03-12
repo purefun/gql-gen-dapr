@@ -1,4 +1,5 @@
 {{- range $it := .Interfaces }}
+    {{$.GoDoc .Name .Description}}
 	type {{.Name }} interface {
 		Is{{.Name }}()
 	}
@@ -21,6 +22,7 @@ type {{.Name}} struct {
 {{end}}
 
 {{range $enum := .Enums}}
+{{$.GoDoc .Name .Description}}
 type {{.Name}} string
 
 const (

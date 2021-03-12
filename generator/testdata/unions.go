@@ -1,5 +1,6 @@
 package testdata
 
+// User a union
 type User interface {
 	IsUser()
 }

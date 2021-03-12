@@ -1,3 +1,4 @@
+"is a interface"
 interface User {
   id: ID!
   name: String!

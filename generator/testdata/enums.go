@@ -11,6 +11,7 @@ type User struct {
 	Role *Role
 }
 
+// Role a user role
 type Role string
 
 const (

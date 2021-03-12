@@ -1,3 +1,4 @@
+"a user role"
 enum Role {
   ROOT
   SUPERVISOR

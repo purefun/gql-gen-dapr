@@ -1,5 +1,6 @@
 package testdata
 
+// User is a interface
 type User interface {
 	IsUser()
 }

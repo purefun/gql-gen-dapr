@@ -6,4 +6,5 @@ type Customer {
   id: ID!
 }
 
+"a union"
 union User = Admin | Customer
