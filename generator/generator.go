@@ -13,7 +13,7 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
-const Version = "v0.2.0"
+const Version = "v0.2.2"
 
 var skipTypes = map[string]bool{
 	"__Directive":         true,
