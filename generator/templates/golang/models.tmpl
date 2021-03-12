@@ -12,7 +12,7 @@ type {{.Name}} struct {
 		{{- if .Description}}
 		{{$.GoDoc .Name .Description}}
 		{{- end}}
-		{{$.GoName .Name}} {{if not .NonNull}}*{{end}}{{.Type}}
+		{{$.GoName .Name}} {{if not .NonNull}}*{{end}}{{.Type}} {{if .Tag}}`{{.Tag}}`{{end}}
 	{{- end}}
 }
 

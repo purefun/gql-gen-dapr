@@ -1,0 +1,3 @@
+type User {
+  id: ID! @tag(json: "id", gorm: "id")
+}

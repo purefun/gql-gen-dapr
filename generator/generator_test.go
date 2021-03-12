@@ -60,6 +60,11 @@ var tests = []TestData{
 		file: "./testdata/interfaces.gql",
 		g:    newGenerator(),
 	},
+	{
+		name: "directive tag",
+		file: "./testdata/directive-tag.gql",
+		g:    newGenerator(),
+	},
 }
 
 func TestGenerate(t *testing.T) {

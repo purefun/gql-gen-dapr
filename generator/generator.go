@@ -97,6 +97,8 @@ func (g *Generator) Generate() (string, error) {
 		g.Imports = make(map[string]string)
 	}
 
+	g.addTagDirective()
+
 	err := g.LoadSchema()
 	if err != nil {
 		return "", err
@@ -197,11 +199,21 @@ func (g *Generator) genModels() (string, error) {
 					if !ok {
 						panic(fmt.Errorf("invalid graphql scalar name: %s", field.Type.NamedType))
 					}
+					// tag directive
+					tag := ""
+					for _, directive := range field.Directives {
+						if directive.Name == "tag" {
+							for _, arg := range directive.Arguments {
+								tag += arg.Name + ":" + "\"" + arg.Value.Raw + "\" "
+							}
+						}
+					}
 					obj.Fields = append(obj.Fields, &Field{
 						Name:        field.Name,
 						Type:        scalarName,
 						NonNull:     field.Type.NonNull,
 						Description: field.Description,
+						Tag:         strings.TrimSpace(tag),
 					})
 				case ast.Object, ast.Enum:
 					obj.Fields = append(obj.Fields, &Field{
@@ -307,4 +319,14 @@ func (g *Generator) GoDoc(name, desc string) string {
 	}
 	n := g.GoName(name)
 	return "// " + n + " " + strings.Replace(desc, "\n", "\n"+"// ", -1)
+}
+
+func (g *Generator) addTagDirective() {
+	tagSource := &ast.Source{
+		Name:    "tag.graphql",
+		Input:   "directive @tag(any: String) on FIELD_DEFINITION",
+		BuiltIn: true,
+	}
+
+	g.Sources = append(g.Sources, tagSource)
 }
