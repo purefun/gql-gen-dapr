@@ -155,7 +155,7 @@ func (g *Generator) genModels() (string, error) {
 		}
 
 		switch schemaType.Kind {
-		case ast.Object:
+		case ast.Object, ast.InputObject:
 			obj := &Object{Name: schemaType.Name, Description: schemaType.Description}
 			for _, field := range schemaType.Fields {
 				fieldDefinition := g.Schema.Types[field.Type.Name()]
