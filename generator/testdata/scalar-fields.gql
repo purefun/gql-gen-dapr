@@ -1,4 +1,7 @@
 type User {
   id: ID
   name: String
+  age: Int
+  score: Float
+  isAdmin: Boolean
 }

@@ -46,6 +46,14 @@ type Field struct {
 	Tag         string
 }
 
+var ScalarMap = map[string]string{
+	"ID":      "string",
+	"String":  "string",
+	"Int":     "int",
+	"Float":   "float64",
+	"Boolean": "bool",
+}
+
 type Resolver struct {
 	Name string
 	Type string
@@ -163,9 +171,13 @@ func (g *Generator) genModels() (string, error) {
 
 				switch fieldDefinition.Kind {
 				case ast.Scalar:
+					scalarName, ok := ScalarMap[field.Type.NamedType]
+					if !ok {
+						panic(fmt.Errorf("invalid graphql scalar name: %s", field.Type.NamedType))
+					}
 					obj.Fields = append(obj.Fields, &Field{
 						Name:        field.Name,
-						Type:        "string",
+						Type:        scalarName,
 						NonNull:     field.Type.NonNull,
 						Description: field.Description,
 					})
