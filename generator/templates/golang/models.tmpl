@@ -9,3 +9,43 @@ type {{.Name}} struct {
 	{{- end}}
 }
 {{end}}
+
+{{range $enum := .Enums}}
+type {{.Name}} string
+
+const (
+	{{- range .Values}}
+      {{$enum.Name}}_{{.Name}} {{$enum.Name}} = "{{.Name}}"
+    {{- end}}
+)
+
+var All{{$enum.Name}} = []{{$enum.Name}}{
+    {{- range .Values}}
+      {{$enum.Name}}_{{.Name}},
+    {{- end}}
+}
+
+func (e {{$enum.Name}}) IsValid() bool {
+	switch e {
+    case {{range $i, $v := .Values}}{{if $i}}, {{end}}{{$enum.Name}}_{{$v.Name}}{{end}}:
+		return true
+	}
+	return false
+}
+
+func (e {{.Name}}) String() string {
+	return string(e)
+}
+
+func (e *{{.Name}}) UnmarshalJSON(v []byte) error {
+	*e = {{.Name}}(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid {{.Name}}", str)
+	}
+	return nil
+}
+
+func (e {{.Name}}) MarshalJSON(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+{{end}}

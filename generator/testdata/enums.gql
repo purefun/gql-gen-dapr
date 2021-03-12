@@ -1,0 +1,11 @@
+enum Role {
+  ROOT
+  SUPERVISOR
+  USER
+  ANONYMOUS
+}
+
+type User {
+  id: ID
+  role: Role
+}

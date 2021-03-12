@@ -45,6 +45,11 @@ var tests = []TestData{
 		file: "./testdata/ref-fields.gql",
 		g:    newGenerator(),
 	},
+	{
+		name: "enums",
+		file: "./testdata/enums.gql",
+		g:    newGenerator(),
+	},
 }
 
 func TestGenerate(t *testing.T) {

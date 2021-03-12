@@ -46,6 +46,17 @@ type Field struct {
 	Tag         string
 }
 
+type Enum struct {
+	Description string
+	Name        string
+	Values      []*EnumValue
+}
+
+type EnumValue struct {
+	Description string
+	Name        string
+}
+
 var ScalarMap = map[string]string{
 	"ID":      "string",
 	"String":  "string",
@@ -69,11 +80,15 @@ type Generator struct {
 	Schema      *ast.Schema
 	Models      *Models
 	ServiceName string
-	Imports     []string
+	Imports     map[string]string // package->alias
 	Query       *Query
+	Enums       []*Enum
 }
 
 func (g *Generator) Generate() (string, error) {
+	if g.Imports == nil {
+		g.Imports = make(map[string]string)
+	}
 
 	err := g.LoadSchema()
 	if err != nil {
@@ -181,7 +196,7 @@ func (g *Generator) genModels() (string, error) {
 						NonNull:     field.Type.NonNull,
 						Description: field.Description,
 					})
-				case ast.Object:
+				case ast.Object, ast.Enum:
 					obj.Fields = append(obj.Fields, &Field{
 						Name:        field.Name,
 						Type:        field.Type.Name(),
@@ -192,6 +207,23 @@ func (g *Generator) genModels() (string, error) {
 			}
 			g.Models.Objects = append(g.Models.Objects, obj)
 
+		case ast.Enum:
+			g.addImport("fmt", "")
+			g.addImport("io", "")
+			g.addImport("strconv", "")
+
+			e := &Enum{
+				Name:        schemaType.Name,
+				Description: schemaType.Description,
+			}
+			for _, v := range schemaType.EnumValues {
+				e.Values = append(e.Values, &EnumValue{
+					Name:        v.Name,
+					Description: v.Description,
+				})
+			}
+
+			g.Enums = append(g.Enums, e)
 		}
 	}
 
@@ -207,10 +239,10 @@ func (g *Generator) genService() (string, error) {
 	g.Query = &Query{Resolvers: []*Resolver{}}
 
 	if g.Schema.Query != nil {
-		g.addImport("context")
-		g.addImport("encoding/json")
-		g.addImport("github.com/dapr/go-sdk/client")
-		g.addImport("github.com/dapr/go-sdk/service/common")
+		g.addImport("context", "")
+		g.addImport("encoding/json", "")
+		g.addImport("github.com/dapr/go-sdk/client", "")
+		g.addImport("github.com/dapr/go-sdk/service/common", "")
 
 		for _, field := range g.Schema.Query.Fields {
 
@@ -230,8 +262,8 @@ func (g *Generator) genService() (string, error) {
 	return "", nil
 }
 
-func (g *Generator) addImport(s string) {
-	g.Imports = append(g.Imports, s)
+func (g *Generator) addImport(pkg, alias string) {
+	g.Imports[pkg] = alias
 }
 
 func (g *Generator) genImports() (string, error) {
