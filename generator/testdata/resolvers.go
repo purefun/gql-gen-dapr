@@ -20,13 +20,18 @@ func NewExampleClient(cc client.Client, appID string) *_ExampleClient {
 	return &_ExampleClient{cc, appID}
 }
 
-func (c *_ExampleClient) Hello(ctx context.Context) (string, error) {
+func (c *_ExampleClient) Hello(ctx context.Context) (*string, error) {
 	content := &client.DataContent{ContentType: "application/json"}
 	resp, err := c.cc.InvokeMethodWithContent(ctx, c.appID, "Hello", "post", content)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return string(resp), nil
+	out := new(string)
+	err = json.Unmarshal(resp, out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 type InvocationHandlerFunc func(ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error)
@@ -51,6 +56,6 @@ func _Example_Hello_Handler(srv Example) InvocationHandlerFunc {
 	}
 }
 
-func Register(s common.Service, srv ExampleServer) {
-	s.AddServiceInvocationHandler("Hello", _Example_Hello_Handler(srv))
+func Register(s common.Service, srv Example) {
+	s.AddServiceInvocationHandler("hello", _Example_Hello_Handler(srv))
 }

@@ -8,13 +8,11 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-const Version = "v0.2.0"
-
 func Execute() {
 	app := cli.NewApp()
 	app.Name = "gql-gen-dapr"
 	app.Usage = "Generate dapr app using GraphQL schema"
-	app.Version = Version
+	app.Version = generator.Version
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{Name: "schemaFile", Aliases: []string{"f"}, Usage: "graphql schema file path", Required: true},
 		&cli.StringFlag{Name: "package", Aliases: []string{"pkg"}, Usage: "package name", Required: true},
@@ -32,8 +30,9 @@ func Execute() {
 			return err
 		}
 		g := generator.NewGenerator(generator.Options{
-			PackageName: packageName,
-			ServiceName: serviceName,
+			PackageName:       packageName,
+			ServiceName:       serviceName,
+			GenHeaderComments: true,
 		})
 
 		g.AddSource(schemaFile, string(schemaBytes))

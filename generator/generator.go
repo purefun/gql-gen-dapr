@@ -13,6 +13,8 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
+const Version = "v0.2.0"
+
 var skipTypes = map[string]bool{
 	"__Directive":         true,
 	"__DirectiveLocation": true,
@@ -86,23 +88,28 @@ type Query struct {
 }
 
 type Options struct {
-	PackageName string
-	ServiceName string
+	PackageName       string
+	ServiceName       string
+	GenHeaderComments bool
 }
 
 func NewGenerator(o Options) *Generator {
 	return &Generator{
-		PackageName: o.PackageName,
-		ServiceName: o.ServiceName,
+		PackageName:       o.PackageName,
+		ServiceName:       o.ServiceName,
+		Version:           Version,
+		GenHeaderComments: o.GenHeaderComments,
 	}
 }
 
 type Generator struct {
-	PackageName string
-	Sources     []*ast.Source
-	Schema      *ast.Schema
-	Models      *Models
-	ServiceName string
+	Version           string
+	PackageName       string
+	GenHeaderComments bool
+	Sources           []*ast.Source
+	Schema            *ast.Schema
+	Models            *Models
+	ServiceName       string
 	// TODO move to models
 	Imports    map[string]string // package->alias
 	Query      *Query
@@ -305,7 +312,7 @@ func (g *Generator) genService() (string, error) {
 			r := &Resolver{Name: field.Name, Type: typeName}
 
 			if len(field.Arguments) > 1 {
-				panic("number of resolver arguments should be 0 or 1")
+				panic("the number of resolver arguments should be 0 or 1")
 			}
 
 			if len(field.Arguments) == 1 {

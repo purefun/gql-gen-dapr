@@ -11,59 +11,62 @@ import (
 
 type TestData struct {
 	name string
-	g    Generator
+	g    *Generator
 	file string
 }
 
-func newGenerator() Generator {
-	return Generator{PackageName: "testdata", ServiceName: "Example"}
+func g() *Generator {
+	return NewGenerator(Options{
+		PackageName: "testdata",
+		ServiceName: "Example",
+	})
 }
 
 var tests = []TestData{
 	{
 		name: "package name",
 		file: "./testdata/package-name.gql",
-		g:    newGenerator(),
+		g:    g(),
 	},
 	{
 		name: "scalar-fields",
 		file: "./testdata/scalar-fields.gql",
-		g:    newGenerator(),
+		g:    g(),
 	},
 	{
 		name: "resolvers",
 		file: "./testdata/resolvers.gql",
-		g:    newGenerator(),
+		g:    g(),
 	},
 	{
 		name: "descriptions",
 		file: "./testdata/descriptions.gql",
-		g:    newGenerator(),
+		g:    g(),
 	},
 	{
 		name: "reference fields",
 		file: "./testdata/ref-fields.gql",
-		g:    newGenerator(),
+		g:    g(),
 	},
 	{
 		name: "enums",
 		file: "./testdata/enums.gql",
-		g:    newGenerator(),
+		g:    g(),
 	},
 	{
 		name: "unions",
 		file: "./testdata/unions.gql",
-		g:    newGenerator(),
+		g:    g(),
 	},
 	{
 		name: "interfces",
 		file: "./testdata/interfaces.gql",
-		g:    newGenerator(),
+		g:    g(),
 	},
 	{
 		name: "directive tag",
 		file: "./testdata/directive-tag.gql",
-		g:    newGenerator(),
+		g:    g(),
 	},
 }
 
