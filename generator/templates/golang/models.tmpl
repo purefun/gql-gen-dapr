@@ -5,7 +5,7 @@ type {{.Name}} struct {
 		{{- if .Description}}
 		{{$.GoDoc .Name .Description}}
 		{{- end}}
-		{{$.GoName .Name}} {{.Type}} `json:"{{.Name}}"`
+		{{$.GoName .Name}} {{.Type}}
 	{{- end}}
 }
 {{end}}

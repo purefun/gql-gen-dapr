@@ -40,6 +40,11 @@ var tests = []TestData{
 		file: "./testdata/descriptions.gql",
 		g:    newGenerator(),
 	},
+	{
+		name: "reference fields",
+		file: "./testdata/ref-fields.gql",
+		g:    newGenerator(),
+	},
 }
 
 func TestGenerate(t *testing.T) {

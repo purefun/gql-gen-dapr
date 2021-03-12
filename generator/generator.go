@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"go/format"
+	"sort"
 	"strings"
 	"unicode"
 
@@ -131,7 +132,17 @@ func (g *Generator) genPackage() (string, error) {
 func (g *Generator) genModels() (string, error) {
 	g.Models = &Models{}
 
-	for _, schemaType := range g.Schema.Types {
+	sortedKeys := []string{}
+	for key := range g.Schema.Types {
+		sortedKeys = append(sortedKeys, key)
+	}
+	sort.Strings(sortedKeys)
+
+	for _, typeKey := range sortedKeys {
+		schemaType, ok := g.Schema.Types[typeKey]
+		if !ok {
+			continue
+		}
 
 		if _, ok := skipTypes[schemaType.Name]; ok {
 			continue
@@ -148,11 +159,18 @@ func (g *Generator) genModels() (string, error) {
 			obj := &Object{Name: schemaType.Name, Description: schemaType.Description}
 			for _, field := range schemaType.Fields {
 				fieldDefinition := g.Schema.Types[field.Type.Name()]
+
 				switch fieldDefinition.Kind {
 				case ast.Scalar:
 					obj.Fields = append(obj.Fields, &Field{
 						Name:        field.Name,
 						Type:        "string",
+						Description: field.Description,
+					})
+				case ast.Object:
+					obj.Fields = append(obj.Fields, &Field{
+						Name:        field.Name,
+						Type:        field.Type.Name(),
 						Description: field.Description,
 					})
 				}

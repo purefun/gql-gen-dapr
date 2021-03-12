@@ -1,0 +1,8 @@
+type User {
+  id: ID
+}
+
+type Post {
+  id: ID
+  owner: User
+}
