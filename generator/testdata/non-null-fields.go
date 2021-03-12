@@ -1,10 +1,9 @@
 package testdata
 
 type Post struct {
-	ID    *string
-	Owner *User
+	Owner User
 }
 
 type User struct {
-	ID *string
+	ID string
 }

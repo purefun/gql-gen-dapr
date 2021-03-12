@@ -42,6 +42,7 @@ type Field struct {
 	Description string
 	Name        string
 	Type        string
+	NonNull     bool
 	Tag         string
 }
 
@@ -165,12 +166,14 @@ func (g *Generator) genModels() (string, error) {
 					obj.Fields = append(obj.Fields, &Field{
 						Name:        field.Name,
 						Type:        "string",
+						NonNull:     field.Type.NonNull,
 						Description: field.Description,
 					})
 				case ast.Object:
 					obj.Fields = append(obj.Fields, &Field{
 						Name:        field.Name,
 						Type:        field.Type.Name(),
+						NonNull:     field.Type.NonNull,
 						Description: field.Description,
 					})
 				}
