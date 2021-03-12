@@ -50,6 +50,16 @@ var tests = []TestData{
 		file: "./testdata/enums.gql",
 		g:    newGenerator(),
 	},
+	{
+		name: "unions",
+		file: "./testdata/unions.gql",
+		g:    newGenerator(),
+	},
+	{
+		name: "interfces",
+		file: "./testdata/interfaces.gql",
+		g:    newGenerator(),
+	},
 }
 
 func TestGenerate(t *testing.T) {

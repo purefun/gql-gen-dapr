@@ -1,0 +1,9 @@
+type Admin {
+  id: ID!
+}
+
+type Customer {
+  id: ID!
+}
+
+union User = Admin | Customer

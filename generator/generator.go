@@ -57,6 +57,11 @@ type EnumValue struct {
 	Name        string
 }
 
+type Interface struct {
+	Description string
+	Name        string
+}
+
 var ScalarMap = map[string]string{
 	"ID":      "string",
 	"String":  "string",
@@ -80,9 +85,11 @@ type Generator struct {
 	Schema      *ast.Schema
 	Models      *Models
 	ServiceName string
-	Imports     map[string]string // package->alias
-	Query       *Query
-	Enums       []*Enum
+	// TODO move to models
+	Imports    map[string]string // package->alias
+	Query      *Query
+	Enums      []*Enum
+	Interfaces []*Interface
 }
 
 func (g *Generator) Generate() (string, error) {
@@ -205,6 +212,9 @@ func (g *Generator) genModels() (string, error) {
 					})
 				}
 			}
+			for _, impl := range g.Schema.GetImplements(schemaType) {
+				obj.Implements = append(obj.Implements, impl.Name)
+			}
 			g.Models.Objects = append(g.Models.Objects, obj)
 
 		case ast.Enum:
@@ -224,7 +234,15 @@ func (g *Generator) genModels() (string, error) {
 			}
 
 			g.Enums = append(g.Enums, e)
+
+		case ast.Union, ast.Interface:
+			it := &Interface{
+				Name:        schemaType.Name,
+				Description: schemaType.Description,
+			}
+			g.Interfaces = append(g.Interfaces, it)
 		}
+
 	}
 
 	out, err := templates.Golang.Execute("models.tmpl", g)

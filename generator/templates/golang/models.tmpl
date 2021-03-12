@@ -1,4 +1,10 @@
-{{- range .Models.Objects}}
+{{- range $it := .Interfaces }}
+	type {{.Name }} interface {
+		Is{{.Name }}()
+	}
+{{- end }}
+
+{{- range $obj := .Models.Objects}}
 {{$.GoDoc .Name .Description}}
 type {{.Name}} struct {
 	{{- range .Fields}}
@@ -8,6 +14,10 @@ type {{.Name}} struct {
 		{{$.GoName .Name}} {{if not .NonNull}}*{{end}}{{.Type}}
 	{{- end}}
 }
+
+{{- range $iface := .Implements }}
+    func ({{ $obj.Name }}) Is{{ $iface }}() {}
+{{- end }}
 {{end}}
 
 {{range $enum := .Enums}}

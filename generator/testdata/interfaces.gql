@@ -1,0 +1,17 @@
+interface User {
+  id: ID!
+  name: String!
+}
+
+type Admin implements User {
+  id: ID!
+  name: String!
+  suspended: Boolean!
+}
+
+
+type Customer implements User {
+  id: ID!
+  name: String!
+  email: String!
+}
