@@ -8,7 +8,7 @@ import (
 )
 
 type Example interface {
-	Hello(ctx context.Context) (string, error)
+	Hello(ctx context.Context) (*string, error)
 }
 
 type _ExampleClient struct {
@@ -22,7 +22,7 @@ func NewExampleClient(cc client.Client, appID string) *_ExampleClient {
 
 func (c *_ExampleClient) Hello(ctx context.Context) (*string, error) {
 	content := &client.DataContent{ContentType: "application/json"}
-	resp, err := c.cc.InvokeMethodWithContent(ctx, c.appID, "Hello", "post", content)
+	resp, err := c.cc.InvokeMethodWithContent(ctx, c.appID, "hello", "post", content)
 	if err != nil {
 		return nil, err
 	}
