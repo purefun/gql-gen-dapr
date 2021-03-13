@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"github.com/dapr/go-sdk/client"
 	"github.com/dapr/go-sdk/service/common"
+	"github.com/dapr/go-sdk/service/grpc"
 )
 
 type EchoInput struct {
@@ -30,8 +31,12 @@ type _EchoClient struct {
 	appID string
 }
 
-func NewEchoClient(cc client.Client, appID string) *_EchoClient {
-	return &_EchoClient{cc, appID}
+func NewEchoClient(appID string) (*_EchoClient, error) {
+	cc, err := client.NewClient()
+	if err != nil {
+		return nil, err
+	}
+	return &_EchoClient{cc, appID}, nil
 }
 
 func (c *_EchoClient) Echo(ctx context.Context, in *EchoInput) (*EchoOutput, error) {
@@ -116,4 +121,14 @@ func _Echo_Text_Handler(srv Echo) InvocationHandlerFunc {
 func Register(s common.Service, srv Echo) {
 	s.AddServiceInvocationHandler("echo", _Echo_Echo_Handler(srv))
 	s.AddServiceInvocationHandler("text", _Echo_Text_Handler(srv))
+}
+
+func NewEchoServer(address string, srv Echo) (common.Service, error) {
+	s, err := grpc.NewService(address)
+	if err != nil {
+		return nil, err
+	}
+	Register(s, srv)
+
+	return s, nil
 }

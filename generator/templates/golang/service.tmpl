@@ -9,8 +9,12 @@ type _{{upperFirst .ServiceName}}Client struct {
 	appID string
 }
 
-func New{{upperFirst .ServiceName}}Client(cc client.Client, appID string) *_{{upperFirst .ServiceName}}Client {
-	return &_{{upperFirst .ServiceName}}Client{cc, appID}
+func New{{upperFirst .ServiceName}}Client(appID string) (*_{{upperFirst .ServiceName}}Client, error) {
+	cc, err := client.NewClient()
+	if err != nil {
+		return nil, err
+	}
+	return &_{{upperFirst .ServiceName}}Client{cc, appID}, nil
 }
 
 {{ range .Query.Resolvers }}
@@ -70,4 +74,14 @@ func Register(s common.Service, srv {{upperFirst $.ServiceName}}) {
 {{- range .Query.Resolvers}}
 	s.AddServiceInvocationHandler("{{.Name}}", _{{upperFirst $.ServiceName}}_{{upperFirst .Name}}_Handler(srv))
 {{- end}}
+}
+
+func New{{upperFirst $.ServiceName}}Server(address string, srv {{upperFirst $.ServiceName}}) (common.Service, error) {
+	s, err := grpc.NewService(address)
+	if err != nil {
+		return nil, err
+	}
+	Register(s, srv)
+
+	return s, nil
 }

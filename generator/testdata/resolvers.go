@@ -17,8 +17,12 @@ type _ExampleClient struct {
 	appID string
 }
 
-func NewExampleClient(cc client.Client, appID string) *_ExampleClient {
-	return &_ExampleClient{cc, appID}
+func NewExampleClient(appID string) (*_ExampleClient, error) {
+	cc, err := client.NewClient()
+	if err != nil {
+		return nil, err
+	}
+	return &_ExampleClient{cc, appID}, nil
 }
 
 func (c *_ExampleClient) Hello(ctx context.Context) (*string, error) {
@@ -103,4 +107,14 @@ func _Example_Hey_Handler(srv Example) InvocationHandlerFunc {
 func Register(s common.Service, srv Example) {
 	s.AddServiceInvocationHandler("hello", _Example_Hello_Handler(srv))
 	s.AddServiceInvocationHandler("hey", _Example_Hey_Handler(srv))
+}
+
+func NewExampleServer(address string, srv Example) (common.Service, error) {
+	s, err := grpc.NewService(address)
+	if err != nil {
+		return nil, err
+	}
+	Register(s, srv)
+
+	return s, nil
 }

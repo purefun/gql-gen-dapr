@@ -4,15 +4,16 @@ import (
 	"context"
 	"flag"
 	"fmt"
-
-	DaprClient "github.com/dapr/go-sdk/client"
-	DaprServer "github.com/dapr/go-sdk/service/grpc"
 )
 
 func main() {
 	runClient := flag.Bool("client", false, "run client")
 	runServer := flag.Bool("server", false, "run server")
 	flag.Parse()
+
+	if !*runClient && !*runServer {
+		panic("please add --client or --server flag to run the demo")
+	}
 
 	if *runClient {
 		NewClient()
@@ -23,8 +24,10 @@ func main() {
 }
 
 func NewClient() {
-	c, _ := DaprClient.NewClient()
-	echo := NewEchoClient(c, "echo_server")
+	echo, err := NewEchoClient("echo_server")
+	if err != nil {
+		panic(err)
+	}
 	resp, err := echo.Text(context.Background())
 	if err != nil {
 		panic(err)
@@ -33,19 +36,12 @@ func NewClient() {
 }
 
 func NewServer() {
-	s, err := DaprServer.NewService(":6000")
-	if err != nil {
-		panic(err)
-	}
-
 	h := new(Handlers)
-
-	Register(s, h)
-
-	err = s.Start()
+	s, err := NewEchoServer(":6000", h)
 	if err != nil {
 		panic(err)
 	}
+	s.Start()
 }
 
 type Handlers struct {
