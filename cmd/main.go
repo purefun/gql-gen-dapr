@@ -15,10 +15,10 @@ func Execute() {
 	app := cli.NewApp()
 	app.Name = "gql-gen-dapr"
 	app.Usage = "Generate dapr app using GraphQL schema"
-	app.UsageText = "gql-gen-dapr graphql-file [flags...]"
+	app.UsageText = "gql-gen-dapr [flags...] graphql-file"
 	app.Version = generator.Version
 	app.Flags = []cli.Flag{
-		&cli.StringFlag{Name: "package", Aliases: []string{"pkg"}, Usage: "package name", DefaultText: "main"},
+		&cli.StringFlag{Name: "package", Aliases: []string{"pkg"}, Usage: "package name", DefaultText: "--service value"},
 		&cli.StringFlag{Name: "service", Aliases: []string{"s"}, Usage: "service name", DefaultText: "The name of --schemaFile"},
 		&cli.StringFlag{Name: "out", Aliases: []string{"o"}, Usage: "output dir", DefaultText: "same dir with --schemaFile"},
 	}
@@ -27,14 +27,19 @@ func Execute() {
 		if schemaFile == "" {
 			return fmt.Errorf("graphql file should be set, \n\nfor example: gql-gen-dapr schema.graphql")
 		}
-		packageName := ctx.String("package")
-		if packageName == "" {
-			packageName = "main"
-		}
+
+		defaultServiceName := strings.TrimSuffix(filepath.Base(schemaFile), filepath.Ext(schemaFile))
 		serviceName := ctx.String("service")
 		if serviceName == "" {
-			serviceName = strings.TrimSuffix(filepath.Base(schemaFile), filepath.Ext(schemaFile))
+			serviceName = defaultServiceName
 		}
+
+		defaultPackageName := serviceName
+		packageName := ctx.String("package")
+		if packageName == "" {
+			packageName = defaultPackageName
+		}
+
 		out := ctx.String("out")
 		if out == "" {
 			out = filepath.Dir(schemaFile)

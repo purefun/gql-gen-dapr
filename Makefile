@@ -1,7 +1,7 @@
 .PHONY: examples test
 
 examples:
-	go run . ./examples/echo/echo.graphql
+	go run . -pkg main ./examples/echo/echo.graphql
 
 test:
 	go test ./generator/. -count=1
