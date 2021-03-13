@@ -44,13 +44,14 @@ type InvocationHandlerFunc func(ctx context.Context, in *common.InvocationEvent)
 {{range .Query.Resolvers}}
 func _{{upperFirst $.ServiceName}}_{{upperFirst .Name}}_Handler(srv {{upperFirst $.ServiceName}}) InvocationHandlerFunc {
 	return func(ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error) {
-        {{- if .Argument}}
-          req := new({{.Argument.Type}})
-          reqErr := json.Unmarshal(in.Data, req)
-          if reqErr != nil {
-            return nil, err
-          }
-        {{- end}}
+		{{- if .Argument}}
+		req := new({{.Argument.Type}})
+		reqErr := json.Unmarshal(in.Data, req)
+		if reqErr != nil {
+			err = reqErr
+			return
+		}
+		{{- end}}
 		resp, mErr := srv.{{upperFirst .Name}}(ctx{{if .Argument}}, req{{end}})
 		if mErr != nil {
 			err = mErr

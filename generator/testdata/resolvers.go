@@ -85,7 +85,8 @@ func _Example_Hey_Handler(srv Example) InvocationHandlerFunc {
 		req := new(string)
 		reqErr := json.Unmarshal(in.Data, req)
 		if reqErr != nil {
-			return nil, err
+			err = reqErr
+			return
 		}
 		resp, mErr := srv.Hey(ctx, req)
 		if mErr != nil {
