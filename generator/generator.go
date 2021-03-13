@@ -13,7 +13,7 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
-const Version = "v0.4.0"
+const Version = "v0.4.1"
 
 var skipTypes = map[string]bool{
 	"__Directive":         true,
@@ -298,6 +298,7 @@ func (g *Generator) genService() (string, error) {
 		g.addImport("encoding/json", "")
 		g.addImport("github.com/dapr/go-sdk/client", "")
 		g.addImport("github.com/dapr/go-sdk/service/common", "")
+		g.addImport("github.com/dapr/go-sdk/service/grpc", "")
 
 		for _, field := range g.Schema.Query.Fields {
 
