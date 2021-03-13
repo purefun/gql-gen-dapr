@@ -13,7 +13,7 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
-const Version = "v0.3.3"
+const Version = "v0.3.4"
 
 var skipTypes = map[string]bool{
 	"__Directive":         true,
@@ -317,7 +317,11 @@ func (g *Generator) genService() (string, error) {
 
 			if len(field.Arguments) == 1 {
 				arg := field.Arguments[0]
-				r.Argument = &Argument{Name: arg.Name, Type: arg.Type.NamedType}
+				typeName, ok := ScalarMap[arg.Type.NamedType]
+				if !ok {
+					typeName = arg.Type.NamedType
+				}
+				r.Argument = &Argument{Name: arg.Name, Type: typeName}
 			}
 
 			g.Query.Resolvers = append(g.Query.Resolvers, r)

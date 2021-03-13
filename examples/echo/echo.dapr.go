@@ -21,7 +21,7 @@ type EchoOutput struct {
 }
 
 type Echo interface {
-	Echo(ctx context.Context) (*EchoOutput, error)
+	Echo(ctx context.Context, in *EchoInput) (*EchoOutput, error)
 	Text(ctx context.Context) (*string, error)
 }
 
@@ -69,7 +69,14 @@ type InvocationHandlerFunc func(ctx context.Context, in *common.InvocationEvent)
 
 func _Echo_Echo_Handler(srv Echo) InvocationHandlerFunc {
 	return func(ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error) {
-		resp, mErr := srv.Echo(ctx)
+
+		req := new(EchoInput)
+		reqErr := json.Unmarshal(in.data, req)
+		if reqErr != nil {
+			return nil, err
+		}
+
+		resp, mErr := srv.Echo(ctx, req)
 		if mErr != nil {
 			err = mErr
 			return
@@ -89,6 +96,7 @@ func _Echo_Echo_Handler(srv Echo) InvocationHandlerFunc {
 
 func _Echo_Text_Handler(srv Echo) InvocationHandlerFunc {
 	return func(ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error) {
+
 		resp, mErr := srv.Text(ctx)
 		if mErr != nil {
 			err = mErr

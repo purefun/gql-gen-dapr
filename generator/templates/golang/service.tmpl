@@ -1,6 +1,6 @@
 type {{upperFirst .ServiceName}} interface {
 {{- range .Query.Resolvers}}
-	{{upperFirst .Name}}(ctx context.Context) (*{{.Type}}, error)
+	{{upperFirst .Name}}(ctx context.Context{{if .Argument}}, in *{{.Argument.Type}}{{end}}) (*{{.Type}}, error)
 {{- end}}
 }
 
@@ -33,14 +33,21 @@ func (c *_{{upperFirst $.ServiceName}}Client) {{upperFirst .Name}}(ctx context.C
 	}
 	return out, nil
 }
-{{- end}}
+{{end}}
 
 type InvocationHandlerFunc func(ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error)
 
 {{range .Query.Resolvers}}
 func _{{upperFirst $.ServiceName}}_{{upperFirst .Name}}_Handler(srv {{upperFirst $.ServiceName}}) InvocationHandlerFunc {
 	return func(ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error) {
-		resp, mErr := srv.{{upperFirst .Name}}(ctx)
+        {{- if .Argument}}
+          req := new({{.Argument.Type}})
+          reqErr := json.Unmarshal(in.Data, req)
+          if reqErr != nil {
+            return nil, err
+          }
+        {{- end}}
+		resp, mErr := srv.{{upperFirst .Name}}(ctx{{if .Argument}}, req{{end}})
 		if mErr != nil {
 			err = mErr
 			return
