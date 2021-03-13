@@ -13,7 +13,7 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
-const Version = "v0.4.2"
+const Version = "v0.4.3"
 
 var skipTypes = map[string]bool{
 	"__Directive":         true,
@@ -291,50 +291,59 @@ func (g *Generator) genModels() (string, error) {
 }
 
 func (g *Generator) genService() (string, error) {
-	g.Query = &Query{Resolvers: []*Resolver{}}
+	if g.Schema.Query == nil || g.Schema.Mutation == nil {
+		return "", nil
+	}
+
+	g.addImport("context", "")
+	g.addImport("encoding/json", "")
+	g.addImport("github.com/dapr/go-sdk/client", "")
+	g.addImport("github.com/dapr/go-sdk/service/common", "")
+	g.addImport("github.com/dapr/go-sdk/service/grpc", "")
+
+	fields := ast.FieldList{}
 
 	if g.Schema.Query != nil {
-		g.addImport("context", "")
-		g.addImport("encoding/json", "")
-		g.addImport("github.com/dapr/go-sdk/client", "")
-		g.addImport("github.com/dapr/go-sdk/service/common", "")
-		g.addImport("github.com/dapr/go-sdk/service/grpc", "")
-
-		for _, field := range g.Schema.Query.Fields {
-
-			if _, ok := skipTypes[field.Name]; ok {
-				continue
-			}
-			typeName, ok := ScalarMap[field.Type.NamedType]
-			if !ok {
-				typeName = field.Type.NamedType
-			}
-
-			r := &Resolver{Name: field.Name, Type: typeName}
-
-			if len(field.Arguments) > 1 {
-				panic("the number of resolver arguments should be 0 or 1")
-			}
-
-			if len(field.Arguments) == 1 {
-				arg := field.Arguments[0]
-				typeName, ok := ScalarMap[arg.Type.NamedType]
-				if !ok {
-					typeName = arg.Type.NamedType
-				}
-				r.Argument = &Argument{Name: arg.Name, Type: typeName}
-			}
-
-			g.Query.Resolvers = append(g.Query.Resolvers, r)
-		}
-
-		out, err := templates.Golang.Execute("service.tmpl", g)
-		if err != nil {
-			return "", err
-		}
-		return out, nil
+		fields = append(fields, g.Schema.Query.Fields...)
 	}
-	return "", nil
+	if g.Schema.Mutation != nil {
+		fields = append(fields, g.Schema.Mutation.Fields...)
+	}
+
+	g.Query = &Query{Resolvers: []*Resolver{}}
+
+	for _, field := range fields {
+		if _, ok := skipTypes[field.Name]; ok {
+			continue
+		}
+		typeName, ok := ScalarMap[field.Type.NamedType]
+		if !ok {
+			typeName = field.Type.NamedType
+		}
+
+		r := &Resolver{Name: field.Name, Type: typeName}
+
+		if len(field.Arguments) > 1 {
+			panic("the number of resolver arguments should be 0 or 1")
+		}
+
+		if len(field.Arguments) == 1 {
+			arg := field.Arguments[0]
+			typeName, ok := ScalarMap[arg.Type.NamedType]
+			if !ok {
+				typeName = arg.Type.NamedType
+			}
+			r.Argument = &Argument{Name: arg.Name, Type: typeName}
+		}
+
+		g.Query.Resolvers = append(g.Query.Resolvers, r)
+	}
+
+	out, err := templates.Golang.Execute("service.tmpl", g)
+	if err != nil {
+		return "", err
+	}
+	return out, nil
 }
 
 func (g *Generator) addImport(pkg, alias string) {

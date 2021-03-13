@@ -8,9 +8,19 @@ import (
 	"github.com/dapr/go-sdk/service/grpc"
 )
 
+type UserInput struct {
+	Name string
+}
+
+type UserOutput struct {
+	ID   string
+	Name string
+}
+
 type Example interface {
 	Hello(ctx context.Context) (*string, error)
 	Hey(ctx context.Context, in *string) (*string, error)
+	CreateUser(ctx context.Context, in *UserInput) (*UserOutput, error)
 }
 
 type _ExampleClient struct {
@@ -51,6 +61,24 @@ func (c *_ExampleClient) Hey(ctx context.Context, in *string) (*string, error) {
 		return nil, err
 	}
 	out := new(string)
+	err = json.Unmarshal(resp, out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *_ExampleClient) CreateUser(ctx context.Context, in *UserInput) (*UserOutput, error) {
+	data, err := json.Marshal(in)
+	if err != nil {
+		return nil, err
+	}
+	content := &client.DataContent{ContentType: "application/json", Data: data}
+	resp, err := c.cc.InvokeMethodWithContent(ctx, c.appID, "createUser", "post", content)
+	if err != nil {
+		return nil, err
+	}
+	out := new(UserOutput)
 	err = json.Unmarshal(resp, out)
 	if err != nil {
 		return nil, err
@@ -106,9 +134,36 @@ func _Example_Hey_Handler(srv Example) InvocationHandlerFunc {
 	}
 }
 
+func _Example_CreateUser_Handler(srv Example) InvocationHandlerFunc {
+	return func(ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error) {
+		req := new(UserInput)
+		reqErr := json.Unmarshal(in.Data, req)
+		if reqErr != nil {
+			err = reqErr
+			return
+		}
+		resp, mErr := srv.CreateUser(ctx, req)
+		if mErr != nil {
+			err = mErr
+			return
+		}
+		data, encErr := json.Marshal(resp)
+		if encErr != nil {
+			err = encErr
+			return
+		}
+		out = &common.Content{
+			ContentType: "application/json",
+			Data:        data,
+		}
+		return
+	}
+}
+
 func Register(s common.Service, srv Example) {
 	s.AddServiceInvocationHandler("hello", _Example_Hello_Handler(srv))
 	s.AddServiceInvocationHandler("hey", _Example_Hey_Handler(srv))
+	s.AddServiceInvocationHandler("createUser", _Example_CreateUser_Handler(srv))
 }
 
 func NewExampleServer(address string, srv Example) (common.Service, error) {
