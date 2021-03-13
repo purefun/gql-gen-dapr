@@ -68,6 +68,11 @@ var tests = []TestData{
 		file: "./testdata/directive-tag.gql",
 		g:    g(),
 	},
+	{
+		name: "array of type",
+		file: "./testdata/array-of-type.gql",
+		g:    g(),
+	},
 }
 
 func TestGenerate(t *testing.T) {

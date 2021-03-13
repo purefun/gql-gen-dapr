@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"go/format"
+	"regexp"
 	"sort"
 	"strings"
 	"unicode"
@@ -13,7 +14,7 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
-const Version = "v0.4.5"
+const Version = "v0.4.6"
 
 var skipTypes = map[string]bool{
 	"__Directive":         true,
@@ -215,6 +216,7 @@ func (g *Generator) genModels() (string, error) {
 		switch schemaType.Kind {
 		case ast.Object, ast.InputObject:
 			obj := &Object{Name: schemaType.Name, Description: schemaType.Description}
+
 			for _, field := range schemaType.Fields {
 				fieldDefinition := g.Schema.Types[field.Type.Name()]
 
@@ -241,9 +243,14 @@ func (g *Generator) genModels() (string, error) {
 						Tag:         strings.TrimSpace(tag),
 					})
 				case ast.Object, ast.Enum:
+					typeName := field.Type.String()
+					isArray, _ := regexp.MatchString(`^\[.+\]!?$`, typeName)
+					if isArray {
+						typeName = "[]" + field.Type.Name()
+					}
 					obj.Fields = append(obj.Fields, &Field{
 						Name:        field.Name,
-						Type:        field.Type.Name(),
+						Type:        typeName,
 						NonNull:     field.Type.NonNull,
 						Description: field.Description,
 					})
