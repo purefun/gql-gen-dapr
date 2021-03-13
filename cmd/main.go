@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -14,15 +15,18 @@ func Execute() {
 	app := cli.NewApp()
 	app.Name = "gql-gen-dapr"
 	app.Usage = "Generate dapr app using GraphQL schema"
+	app.UsageText = "gql-gen-dapr graphql-file [flags...]"
 	app.Version = generator.Version
 	app.Flags = []cli.Flag{
-		&cli.StringFlag{Name: "schemaFile", Aliases: []string{"f"}, Usage: "graphql schema file path", Required: true},
 		&cli.StringFlag{Name: "package", Aliases: []string{"pkg"}, Usage: "package name", DefaultText: "main"},
 		&cli.StringFlag{Name: "service", Aliases: []string{"s"}, Usage: "service name", DefaultText: "The name of --schemaFile"},
 		&cli.StringFlag{Name: "out", Aliases: []string{"o"}, Usage: "output dir", DefaultText: "same dir with --schemaFile"},
 	}
 	app.Action = func(ctx *cli.Context) error {
-		schemaFile := ctx.String("schemaFile")
+		schemaFile := ctx.Args().Get(0)
+		if schemaFile == "" {
+			return fmt.Errorf("graphql file should be set, \n\nfor example: gql-gen-dapr schema.graphql")
+		}
 		packageName := ctx.String("package")
 		if packageName == "" {
 			packageName = "main"
