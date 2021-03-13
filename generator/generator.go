@@ -13,7 +13,7 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
-const Version = "v0.4.3"
+const Version = "v0.4.4"
 
 var skipTypes = map[string]bool{
 	"__Directive":         true,
@@ -291,7 +291,7 @@ func (g *Generator) genModels() (string, error) {
 }
 
 func (g *Generator) genService() (string, error) {
-	if g.Schema.Query == nil || g.Schema.Mutation == nil {
+	if g.Schema.Query == nil && g.Schema.Mutation == nil {
 		return "", nil
 	}
 
