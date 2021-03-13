@@ -3,6 +3,8 @@ package cmd
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/purefun/gql-gen-dapr/generator"
 	"github.com/urfave/cli/v2"
@@ -15,15 +17,24 @@ func Execute() {
 	app.Version = generator.Version
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{Name: "schemaFile", Aliases: []string{"f"}, Usage: "graphql schema file path", Required: true},
-		&cli.StringFlag{Name: "package", Aliases: []string{"pkg"}, Usage: "package name", Required: true},
-		&cli.StringFlag{Name: "service", Aliases: []string{"s"}, Usage: "service name", Required: true},
-		&cli.StringFlag{Name: "out", Aliases: []string{"o"}, Usage: "output dir", Required: true},
+		&cli.StringFlag{Name: "package", Aliases: []string{"pkg"}, Usage: "package name", DefaultText: "main"},
+		&cli.StringFlag{Name: "service", Aliases: []string{"s"}, Usage: "service name", DefaultText: "The name of --schemaFile"},
+		&cli.StringFlag{Name: "out", Aliases: []string{"o"}, Usage: "output dir", DefaultText: "same dir with --schemaFile"},
 	}
 	app.Action = func(ctx *cli.Context) error {
 		schemaFile := ctx.String("schemaFile")
 		packageName := ctx.String("package")
+		if packageName == "" {
+			packageName = "main"
+		}
 		serviceName := ctx.String("service")
+		if serviceName == "" {
+			serviceName = strings.TrimSuffix(filepath.Base(schemaFile), filepath.Ext(schemaFile))
+		}
 		out := ctx.String("out")
+		if out == "" {
+			out = filepath.Dir(schemaFile)
+		}
 
 		schemaBytes, err := ioutil.ReadFile(schemaFile)
 		if err != nil {
@@ -42,7 +53,9 @@ func Execute() {
 			return err
 		}
 
-		err = ioutil.WriteFile(out+"/generated.go", []byte(outString), 0644)
+		outFile := strings.TrimSuffix(out, "/") + "/" + serviceName + ".dapr.go"
+
+		err = ioutil.WriteFile(outFile, []byte(outString), 0644)
 		if err != nil {
 			return err
 		}

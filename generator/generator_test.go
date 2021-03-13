@@ -1,8 +1,8 @@
 package generator
 
 import (
+	"github.com/purefun/gql-gen-dapr/tools"
 	"io/ioutil"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -78,8 +78,7 @@ func TestGenerate(t *testing.T) {
 
 			tt.g.AddSource(tt.file, string(schemaString))
 
-			var re = regexp.MustCompile(`^(.+)(\.gql)`)
-			goFile := re.ReplaceAllString(tt.file, `$1.go`)
+			goFile := tools.ReplaceExt(tt.file, ".go")
 			goBytes, err := ioutil.ReadFile(goFile)
 			require.NoError(t, err)
 
