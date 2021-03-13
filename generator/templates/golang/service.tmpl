@@ -4,21 +4,21 @@ type {{upperFirst .ServiceName}} interface {
 {{- end}}
 }
 
-type _{{upperFirst .ServiceName}}Client struct {
+type {{upperFirst .ServiceName}}Client struct {
 	cc    client.Client
 	appID string
 }
 
-func New{{upperFirst .ServiceName}}Client(appID string) (*_{{upperFirst .ServiceName}}Client, error) {
+func New{{upperFirst .ServiceName}}Client(appID string) (*{{upperFirst .ServiceName}}Client, error) {
 	cc, err := client.NewClient()
 	if err != nil {
 		return nil, err
 	}
-	return &_{{upperFirst .ServiceName}}Client{cc, appID}, nil
+	return &{{upperFirst .ServiceName}}Client{cc, appID}, nil
 }
 
 {{ range .Query.Resolvers }}
-func (c *_{{upperFirst $.ServiceName}}Client) {{upperFirst .Name}}(ctx context.Context{{if .Argument}}, in *{{.Argument.Type}}{{end}}) (*{{.Type}}, error) {
+func (c *{{upperFirst $.ServiceName}}Client) {{upperFirst .Name}}(ctx context.Context{{if .Argument}}, in *{{.Argument.Type}}{{end}}) (*{{.Type}}, error) {
     {{- if .Argument}}
     data, err := json.Marshal(in)
     if err != nil {

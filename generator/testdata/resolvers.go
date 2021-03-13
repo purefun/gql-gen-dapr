@@ -23,20 +23,20 @@ type Example interface {
 	CreateUser(ctx context.Context, in *UserInput) (*UserOutput, error)
 }
 
-type _ExampleClient struct {
+type ExampleClient struct {
 	cc    client.Client
 	appID string
 }
 
-func NewExampleClient(appID string) (*_ExampleClient, error) {
+func NewExampleClient(appID string) (*ExampleClient, error) {
 	cc, err := client.NewClient()
 	if err != nil {
 		return nil, err
 	}
-	return &_ExampleClient{cc, appID}, nil
+	return &ExampleClient{cc, appID}, nil
 }
 
-func (c *_ExampleClient) Hello(ctx context.Context) (*string, error) {
+func (c *ExampleClient) Hello(ctx context.Context) (*string, error) {
 	content := &client.DataContent{ContentType: "application/json"}
 	resp, err := c.cc.InvokeMethodWithContent(ctx, c.appID, "hello", "post", content)
 	if err != nil {
@@ -50,7 +50,7 @@ func (c *_ExampleClient) Hello(ctx context.Context) (*string, error) {
 	return out, nil
 }
 
-func (c *_ExampleClient) Hey(ctx context.Context, in *string) (*string, error) {
+func (c *ExampleClient) Hey(ctx context.Context, in *string) (*string, error) {
 	data, err := json.Marshal(in)
 	if err != nil {
 		return nil, err
@@ -68,7 +68,7 @@ func (c *_ExampleClient) Hey(ctx context.Context, in *string) (*string, error) {
 	return out, nil
 }
 
-func (c *_ExampleClient) CreateUser(ctx context.Context, in *UserInput) (*UserOutput, error) {
+func (c *ExampleClient) CreateUser(ctx context.Context, in *UserInput) (*UserOutput, error) {
 	data, err := json.Marshal(in)
 	if err != nil {
 		return nil, err
