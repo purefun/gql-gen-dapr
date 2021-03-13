@@ -51,7 +51,7 @@ func NewServer() {
 type Handlers struct {
 }
 
-func (h *Handlers) Echo(ctx context.Context) (*EchoOutput, error) {
+func (h *Handlers) Echo(ctx context.Context, in *EchoInput) (*EchoOutput, error) {
 	panic("not implemented") // TODO: Implement
 }
 
